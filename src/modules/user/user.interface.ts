@@ -1,5 +1,6 @@
 interface User {
     _id: string
+    role: Number
     firstName: string
     lastName: string
     fullName: string
@@ -8,7 +9,11 @@ interface User {
     address?: {
         street: string,
         city: string,
-    }
+    },
+    avatar?: string,
+    birthday?: string,
+    updatedAt: Date,
+    createdAt: Date,
 }
 
 export default User

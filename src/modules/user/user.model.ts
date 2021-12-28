@@ -9,14 +9,19 @@ const addressSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
     {
-        address: addressSchema,
-        email: String,
+        role: Number,
         firstName: String,
         lastName: String,
+        birthday: String,
+        avatar: String,
+        email: String,
         password: {
             type: String,
             get: (): undefined => undefined,
         },
+        address: addressSchema,
+        updatedAt : { type : Date, default: Date.now },
+        createdAt : { type : Date, default: Date.now }
     },
     {
         toJSON: {

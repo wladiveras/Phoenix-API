@@ -1,7 +1,17 @@
-import { IsOptional, IsString, ValidateNested } from 'class-validator'
+import {
+    IsOptional,
+    IsString,
+    ValidateNested,
+    IsInt,
+} from 'class-validator'
+
 import CreateAddressDto from './address.dto'
 
 class CreateUserDto {
+
+    @IsInt()
+    public role: Number
+
     @IsString()
     public firstName: string
 
@@ -13,6 +23,12 @@ class CreateUserDto {
 
     @IsString()
     public password: string
+
+    @IsString()
+    public birthday: string
+
+    @IsString()
+    public avatar: string
 
     @IsOptional()
     @ValidateNested()

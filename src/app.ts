@@ -44,12 +44,6 @@ class App {
         this.app.use(morgan)
 
         Logger.info('[APP] middleware Initialized')
-
-        // Logger.error('test log example')
-        // Logger.warn ('test log example')
-        // Logger.info ('test log example')
-        // Logger.http ('test log example')
-        // Logger.debug('test log example')
     }
 
     private initializeErrorHandling() {
