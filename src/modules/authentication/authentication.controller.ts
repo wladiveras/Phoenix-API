@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Request, Response, NextFunction, Router } from 'express'
 import * as jwt from 'jsonwebtoken'
 import * as bcrypt from 'bcrypt'
@@ -7,6 +8,7 @@ import Controller from '@interfaces/controller.interface'
 import DataStoredInToken from '@interfaces/dataStoredInToken'
 import TokenData from '@interfaces/tokenData.interface'
 import validationMiddleware from '@middleware/validation.middleware'
+import Logger from '@src/utils/Logger'
 
 import CreateUserDto from '@modules/user/user.dto'
 import User from '@modules/user/user.interface'
@@ -14,7 +16,10 @@ import userModel from '@modules/user/user.model'
 
 import AuthenticationService from './authentication.service'
 import LogInDto from './logIn.dto'
+import TokenDto from './token.dto'
 import config from 'config'
+import refreshTokens from '@utils/refreshTokens'
+import { suid } from 'rand-token'
 
 class AuthenticationController implements Controller {
     public path = '/auth'
@@ -29,6 +34,7 @@ class AuthenticationController implements Controller {
     private initializeRoutes() {
         this.router.post(`${this.path}/register`, validationMiddleware(CreateUserDto), this.registration)
         this.router.post(`${this.path}/login`, validationMiddleware(LogInDto), this.loggingIn)
+        this.router.get(`${this.path}/token`, validationMiddleware(TokenDto), this.refreshToken)
         this.router.post(`${this.path}/logout`, this.loggingOut)
     }
 
@@ -47,17 +53,43 @@ class AuthenticationController implements Controller {
     }
 
     private loggingIn = async (request: Request, response: Response, next: NextFunction) => {
+
         const logInData: LogInDto = request.body
         const user = await this.user.findOne({ email: logInData.email })
+
         if (user) {
             const isPasswordMatching = await bcrypt.compare(
                 logInData.password,
                 user.get('password', null, { getters: false }),
             )
+
             if (isPasswordMatching) {
-                const tokenData = this.createToken(user)
-                response.setHeader('Set-Cookie', [this.createCookie(tokenData)])
-                response.send(user)
+                const accessToken = this.createToken(user)
+                const refreshToken = this.createToken(user, true)
+                const tokenHash = suid(40)
+                refreshTokens[tokenHash] = refreshToken
+
+                Logger.debug(`[loggingIn] refreshTokens updated >> ${JSON.stringify(refreshTokens)}`)
+
+                response.send({
+                    response: {
+                        user: {
+                            'id': user.id,
+                            'name': user.fullName,
+                            'email': user.email,
+                            'createdAt': user.createdAt,
+                            'updatedAt': user.updatedAt,
+                            'role': user.role,
+                            'exceptions': [], // TODO: add exception special permissions
+                            'permissions': [] // TODO: add permissions
+                        },
+                        hash: tokenHash,
+                        token: accessToken.token,
+                        refreshToken: refreshToken.token
+                    },
+                    message: 'User login successfully.',
+                    status: 200
+                })
             } else {
                 next(new WrongCredentialsException())
             }
@@ -66,29 +98,65 @@ class AuthenticationController implements Controller {
         }
     }
 
-    private loggingOut = (request: Request, response: Response) => {
-        response.setHeader('Set-Cookie', ['Authorization=Max-age=0'])
-        response.send(200)
+    private refreshToken = async (request: Request, response: Response, next: NextFunction) => {
+
+        const tokenData: TokenDto = request.body
+        const refreshSecret = config.get('misc.refreshSecret')
+
+        if ((tokenData.hash in refreshTokens) && jwt.verify(tokenData.token, refreshSecret) as DataStoredInToken) {
+
+            const user = await this.user.findOne({ _id: tokenData.uid })
+
+            const accessToken = this.createToken(user)
+            const refreshToken = this.createToken(user, true)
+
+            delete refreshTokens[tokenData.hash]
+
+            Logger.debug(`[refreshToken] refreshTokens updated >> ${JSON.stringify(refreshTokens)}`)
+
+            response.send({
+                response: {
+                    token: accessToken.token,
+                    refreshToken: refreshToken.token
+                },
+                message: 'Refresh token successfully.',
+                status: 200
+            })
+        } else {
+            next(new WrongCredentialsException())
+        }
     }
 
-    private createCookie(tokenData: TokenData) {
-        return `Authorization=${tokenData.token}`
-    // return `Authorization=${tokenData.token} HttpOnly Max-Age=${tokenData.expiresIn}`
+    private loggingOut = (request: Request, response: Response, next: NextFunction) => {
+
+        const tokenData: TokenDto = request.body
+        delete refreshTokens[tokenData.hash]
+
+        Logger.debug(`[loggingOut] refreshTokens updated << ${JSON.stringify(refreshTokens)}`)
+
+        response.send({
+            message: 'User logged out successfully.',
+            status: 200
+        })
     }
 
-    private createToken(user: User): TokenData {
-        const expiresIn = 60 * 60 // an hour
+    private createToken(user: User, refresh = false): TokenData {
+
+        const expiresIn = '1m'
+        const refreshExpiresIn = '1h'
         const secret = config.get('misc.jwtSecret')
+        const refreshSecret = config.get('misc.refreshSecret')
+
         const dataStoredInToken: DataStoredInToken = {
-            _id: user._id,
+            _id: user._id
         }
         return {
-            expiresIn,
-            // @ts-ignore
-            token: jwt.sign(dataStoredInToken, secret, { expiresIn }),
+            expiresIn: refresh ? refreshExpiresIn : expiresIn,
+            token: refresh
+                ? jwt.sign(dataStoredInToken, refreshSecret, { expiresIn: refreshExpiresIn })
+                : jwt.sign(dataStoredInToken, secret, { expiresIn : expiresIn}),
         }
     }
-
 }
 
 export default AuthenticationController

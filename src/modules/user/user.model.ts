@@ -9,7 +9,7 @@ const addressSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
     {
-        role: Number,
+        role: String,
         firstName: String,
         lastName: String,
         birthday: String,

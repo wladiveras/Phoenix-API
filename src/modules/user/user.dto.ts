@@ -9,8 +9,8 @@ import CreateAddressDto from './address.dto'
 
 class CreateUserDto {
 
-    @IsInt()
-    public role: Number
+    @IsString()
+    public role: string
 
     @IsString()
     public firstName: string

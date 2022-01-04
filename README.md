@@ -11,6 +11,7 @@
   
   **{POST}** - /auth/login\
   **{POST}** - /auth/register\
+  **{GET}**  - /auth/token\
   **{POST}** - /auth/logout
 
 #### > Users (CRUD)
@@ -28,5 +29,5 @@
   
 ## A fazer
 
-- [ ] module :: Criação/Edição Cartões
+- [x] module ::Refresh Token
 - [ ] docs :: Finalizar markdown

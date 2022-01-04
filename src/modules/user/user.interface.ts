@@ -1,6 +1,6 @@
 interface User {
     _id: string
-    role: Number
+    role: string
     firstName: string
     lastName: string
     fullName: string

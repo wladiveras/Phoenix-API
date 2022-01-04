@@ -8,7 +8,7 @@ import cookieParser from 'cookie-parser'
 import Controller from '@interfaces/controller.interface'
 import errorMiddleware from '@middleware/error.middleware'
 import morgan from '@middleware/morgan.middleware'
-import Logger from './utils/Logger'
+import Logger from '@utils/Logger'
 
 class App {
     public app: express.Application
@@ -35,7 +35,8 @@ class App {
     private initializeMiddleware() {
 
         const corsOptions: cors.CorsOptions = {
-            origin: config.get('misc.allowOrigin')
+            origin: config.get('misc.allowOrigin'),
+            credentials: true,
         }
         this.app.use(timeout('10s'))
         this.app.use(bodyParser.json())

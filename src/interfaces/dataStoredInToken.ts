@@ -1,5 +1,4 @@
-interface DataStoredInToken {
+export default interface DataStoredInToken {
     _id: string
 }
 
-export default DataStoredInToken

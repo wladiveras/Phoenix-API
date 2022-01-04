@@ -30,7 +30,22 @@ class UserController implements Controller {
         }
         const user = await userQuery
         if (user) {
-            response.send(user)
+            response.send({
+                response: {
+                    user: {
+                        'id': user.id,
+                        'name': user.fullName,
+                        'email': user.email,
+                        'createdAt': user.createdAt,
+                        'updatedAt': user.updatedAt,
+                        'role': user.role,
+                        'exceptions': [], // TODO: add exceptions permissions
+                        'permissions': [] // TODO: add permissions
+                    },
+                },
+                message: 'User retrieved successfully.',
+                status: 200
+            })
         } else {
             next(new UserNotFoundException(id))
         }

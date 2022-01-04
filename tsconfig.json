@@ -22,6 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@src/*": ["./src/*"],
+      "@utils/*": ["./src/utils/*"],
       "@modules/*": ["./src/modules/*"],
       "@interfaces/*": ["./src/interfaces/*"],
       "@exceptions/*": ["./src/exceptions/*"],
