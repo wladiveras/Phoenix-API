@@ -1,5 +1,7 @@
 node_modules
 config/default.ts
+yarn.lock
+yarn-error.log
 .idea
 logs
 .env
