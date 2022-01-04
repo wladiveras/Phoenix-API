@@ -12,3 +12,4 @@ config/default.ts
 .idea
 logs
 .env
+package-lock.json
