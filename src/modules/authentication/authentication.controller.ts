@@ -34,7 +34,7 @@ class AuthenticationController implements Controller {
     private initializeRoutes() {
         this.router.post(`${this.path}/register`, validationMiddleware(CreateUserDto), this.registration)
         this.router.post(`${this.path}/login`, validationMiddleware(LogInDto), this.loggingIn)
-        this.router.get(`${this.path}/token`, validationMiddleware(TokenDto), this.refreshToken)
+        this.router.post(`${this.path}/token`, validationMiddleware(TokenDto), this.refreshToken)
         this.router.post(`${this.path}/logout`, this.loggingOut)
     }
 
@@ -109,13 +109,26 @@ class AuthenticationController implements Controller {
 
             const accessToken = this.createToken(user)
             const refreshToken = this.createToken(user, true)
+            const tokenHash = suid(40)
 
             delete refreshTokens[tokenData.hash]
+            refreshTokens[tokenHash] = refreshToken
 
             Logger.debug(`[refreshToken] refreshTokens updated >> ${JSON.stringify(refreshTokens)}`)
 
             response.send({
                 response: {
+                    user: {
+                        'id': user.id,
+                        'name': user.fullName,
+                        'email': user.email,
+                        'createdAt': user.createdAt,
+                        'updatedAt': user.updatedAt,
+                        'role': user.role,
+                        'exceptions': [], // TODO: add exception special permissions
+                        'permissions': [] // TODO: add permissions
+                    },
+                    hash: tokenHash,
                     token: accessToken.token,
                     refreshToken: refreshToken.token
                 },
