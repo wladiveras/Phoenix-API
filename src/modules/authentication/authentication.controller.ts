@@ -19,7 +19,6 @@ import LogInDto from './logIn.dto'
 import TokenDto from './token.dto'
 import config from 'config'
 import refreshTokens from '@utils/refreshTokens'
-import { suid } from 'rand-token'
 
 class AuthenticationController implements Controller {
     public path = '/auth'
