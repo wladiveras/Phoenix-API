@@ -41,10 +41,7 @@ class AuthenticationController implements Controller {
     private registration = async (request: Request, response: Response, next: NextFunction) => {
         const userData: CreateUserDto = request.body
         try {
-            const {
-                cookie,
-                user,
-            } = await this.authenticationService.register(userData)
+            const { cookie, user } = await this.authenticationService.register(userData)
             response.setHeader('Set-Cookie', [cookie])
             response.send(user)
         } catch (error) {
@@ -53,7 +50,6 @@ class AuthenticationController implements Controller {
     }
 
     private loggingIn = async (request: Request, response: Response, next: NextFunction) => {
-
         const logInData: LogInDto = request.body
         const user = await this.user.findOne({ email: logInData.email })
 
@@ -74,21 +70,21 @@ class AuthenticationController implements Controller {
                 response.send({
                     response: {
                         user: {
-                            'id': user.id,
-                            'name': user.fullName,
-                            'email': user.email,
-                            'createdAt': user.createdAt,
-                            'updatedAt': user.updatedAt,
-                            'role': user.role,
-                            'exceptions': [], // TODO: add exception special permissions
-                            'permissions': [] // TODO: add permissions
+                            id: user.id,
+                            name: user.fullName,
+                            email: user.email,
+                            createdAt: user.createdAt,
+                            updatedAt: user.updatedAt,
+                            role: user.role,
+                            exceptions: [], // TODO: add exception special permissions
+                            permissions: [], // TODO: add permissions
                         },
                         hash: tokenHash,
                         token: accessToken.token,
-                        refreshToken: refreshToken.token
+                        refreshToken: refreshToken.token,
                     },
                     message: 'User login successfully.',
-                    status: 200
+                    status: 200,
                 })
             } else {
                 next(new WrongCredentialsException())
@@ -99,12 +95,10 @@ class AuthenticationController implements Controller {
     }
 
     private refreshToken = async (request: Request, response: Response, next: NextFunction) => {
-
         const tokenData: TokenDto = request.body
         const refreshSecret = config.get('misc.refreshSecret')
 
-        if ((tokenData.hash in refreshTokens) && jwt.verify(tokenData.token, refreshSecret) as DataStoredInToken) {
-
+        if (tokenData.hash in refreshTokens && (jwt.verify(tokenData.token, refreshSecret) as DataStoredInToken)) {
             const user = await this.user.findOne({ _id: tokenData.uid })
 
             const accessToken = this.createToken(user)
@@ -119,21 +113,21 @@ class AuthenticationController implements Controller {
             response.send({
                 response: {
                     user: {
-                        'id': user.id,
-                        'name': user.fullName,
-                        'email': user.email,
-                        'createdAt': user.createdAt,
-                        'updatedAt': user.updatedAt,
-                        'role': user.role,
-                        'exceptions': [], // TODO: add exception special permissions
-                        'permissions': [] // TODO: add permissions
+                        id: user.id,
+                        name: user.fullName,
+                        email: user.email,
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
+                        role: user.role,
+                        exceptions: [], // TODO: add exception special permissions
+                        permissions: [], // TODO: add permissions
                     },
                     hash: tokenHash,
                     token: accessToken.token,
-                    refreshToken: refreshToken.token
+                    refreshToken: refreshToken.token,
                 },
                 message: 'Refresh token successfully.',
-                status: 200
+                status: 200,
             })
         } else {
             next(new WrongCredentialsException())
@@ -141,7 +135,6 @@ class AuthenticationController implements Controller {
     }
 
     private loggingOut = (request: Request, response: Response, next: NextFunction) => {
-
         const tokenData: TokenDto = request.body
         delete refreshTokens[tokenData.hash]
 
@@ -149,25 +142,24 @@ class AuthenticationController implements Controller {
 
         response.send({
             message: 'User logged out successfully.',
-            status: 200
+            status: 200,
         })
     }
 
     private createToken(user: User, refresh = false): TokenData {
-
         const expiresIn = '1m'
         const refreshExpiresIn = '1h'
         const secret = config.get('misc.jwtSecret')
         const refreshSecret = config.get('misc.refreshSecret')
 
         const dataStoredInToken: DataStoredInToken = {
-            _id: user._id
+            _id: user._id,
         }
         return {
             expiresIn: refresh ? refreshExpiresIn : expiresIn,
             token: refresh
                 ? jwt.sign(dataStoredInToken, refreshSecret, { expiresIn: refreshExpiresIn })
-                : jwt.sign(dataStoredInToken, secret, { expiresIn : expiresIn}),
+                : jwt.sign(dataStoredInToken, secret, { expiresIn: expiresIn }),
         }
     }
 }
