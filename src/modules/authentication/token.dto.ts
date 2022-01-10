@@ -2,9 +2,7 @@ import { IsString } from 'class-validator'
 
 class TokenDto {
     @IsString()
-    public uid: string
-    @IsString()
-    public hash: string
+    public id: string
     @IsString()
     public token: string
 }

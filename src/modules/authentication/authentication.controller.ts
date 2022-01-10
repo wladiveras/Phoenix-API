@@ -62,10 +62,8 @@ class AuthenticationController implements Controller {
             if (isPasswordMatching) {
                 const accessToken = this.createToken(user)
                 const refreshToken = this.createToken(user, true)
-                const tokenHash = suid(40)
-                refreshTokens[tokenHash] = refreshToken
 
-                Logger.debug(`[loggingIn] refreshTokens updated >> ${JSON.stringify(refreshTokens)}`)
+                Logger.debug(`[loggingIn] user '${user.fullName}' logged in`)
 
                 response.send({
                     response: {
@@ -79,7 +77,6 @@ class AuthenticationController implements Controller {
                             exceptions: [], // TODO: add exception special permissions
                             permissions: [], // TODO: add permissions
                         },
-                        hash: tokenHash,
                         token: accessToken.token,
                         refreshToken: refreshToken.token,
                     },
@@ -98,17 +95,13 @@ class AuthenticationController implements Controller {
         const tokenData: TokenDto = request.body
         const refreshSecret = config.get('misc.refreshSecret')
 
-        if (tokenData.hash in refreshTokens && (jwt.verify(tokenData.token, refreshSecret) as DataStoredInToken)) {
-            const user = await this.user.findOne({ _id: tokenData.uid })
+        if (jwt.verify(tokenData.token, refreshSecret) as DataStoredInToken) {
+            const user = await this.user.findOne({ _id: tokenData.id })
 
             const accessToken = this.createToken(user)
             const refreshToken = this.createToken(user, true)
-            const tokenHash = suid(40)
 
-            delete refreshTokens[tokenData.hash]
-            refreshTokens[tokenHash] = refreshToken
-
-            Logger.debug(`[refreshToken] refreshTokens updated >> ${JSON.stringify(refreshTokens)}`)
+            Logger.debug(`[refreshToken] refreshTokens updated `)
 
             response.send({
                 response: {
@@ -122,7 +115,6 @@ class AuthenticationController implements Controller {
                         exceptions: [], // TODO: add exception special permissions
                         permissions: [], // TODO: add permissions
                     },
-                    hash: tokenHash,
                     token: accessToken.token,
                     refreshToken: refreshToken.token,
                 },
@@ -135,11 +127,7 @@ class AuthenticationController implements Controller {
     }
 
     private loggingOut = (request: Request, response: Response, next: NextFunction) => {
-        const tokenData: TokenDto = request.body
-        delete refreshTokens[tokenData.hash]
-
         Logger.debug(`[loggingOut] refreshTokens updated << ${JSON.stringify(refreshTokens)}`)
-
         response.send({
             message: 'User logged out successfully.',
             status: 200,
@@ -148,7 +136,7 @@ class AuthenticationController implements Controller {
 
     private createToken(user: User, refresh = false): TokenData {
         const expiresIn = '1m'
-        const refreshExpiresIn = '1h'
+        const refreshExpiresIn = '1d'
         const secret = config.get('misc.jwtSecret')
         const refreshSecret = config.get('misc.refreshSecret')
 
