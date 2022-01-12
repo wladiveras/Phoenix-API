@@ -62,7 +62,7 @@ class AuthenticationController implements Controller {
                 const accessToken = this.createToken(user)
                 const refreshToken = this.createToken(user, true)
 
-                Logger.debug(`[loggingIn] user '${user.fullName}' logged in`)
+                Logger.debug(`[loggingIn] user ${user.fullName} logged in`)
 
                 response.send({
                     response: {

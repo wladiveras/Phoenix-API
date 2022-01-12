@@ -1,5 +1,9 @@
 import * as bodyParser from 'body-parser'
 import * as express from 'express'
+import { Server } from 'socket.io'
+import { createServer } from 'http'
+import socket from '@utils/Socket'
+
 import cors from 'cors'
 import config from 'config'
 import mongoose from 'mongoose'
@@ -12,20 +16,26 @@ import Logger from '@utils/Logger'
 
 class App {
     public app: express.Application
+    private httpServer
+    private io
 
     constructor(controllers: Controller[]) {
         this.app = express.default()
+        this.httpServer = createServer(this.app)
+        this.io = new Server(this.httpServer, {})
 
-        this.connectToTheDatabase()
         this.initializeMiddleware()
         this.initializeControllers(controllers)
         this.initializeErrorHandling()
     }
 
     public listen() {
-        this.app.listen(config.get('port'), () => {
-            Logger.info(`[APP] ${config.get('name')} listening on the port ${config.get('port')}`)
+        this.httpServer.listen(config.get('port'), config.get('port'), () => {
+            Logger.info(`[APP] ${config.get('name')} listening on the port ${config.get('port')} 🚀`)
         })
+
+        const io = this.io
+        socket({ io })
     }
 
     public getServer() {
@@ -33,7 +43,6 @@ class App {
     }
 
     private initializeMiddleware() {
-
         const corsOptions: cors.CorsOptions = {
             origin: config.get('misc.allowOrigin'),
             credentials: true,
@@ -61,12 +70,14 @@ class App {
     private connectToTheDatabase() {
         const uri = config.get('env.development')
             ? config.get('database.mongo.dbCallback')
-            : `mongodb://${config.get('database.mongo.user')}:${config.get('database.mongo.pass')}${config.get('database.mongo.dbPath')}`
+            : `mongodb://${config.get('database.mongo.user')}:${config.get('database.mongo.pass')}${config.get(
+                  'database.mongo.dbPath',
+              )}`
 
         // @ts-ignore
         mongoose.connect(uri, {
             useNewUrlParser: true,
-            useUnifiedTopology: true
+            useUnifiedTopology: true,
         })
         Logger.info(`[APP] Connected to the database successfully`)
     }

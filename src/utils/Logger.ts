@@ -1,4 +1,3 @@
-
 import * as winston from 'winston'
 import 'winston-daily-rotate-file'
 import config from 'config'
@@ -11,7 +10,7 @@ const levels = {
     debug: 4,
 }
 
-const level = () => config.get('env.development') ? 'debug' : 'info'
+const level = () => (config.get('env.development') ? 'debug' : 'info')
 
 const colors = {
     error: 'red',
@@ -25,37 +24,33 @@ winston.addColors(colors)
 
 const format = winston.format.combine(
     winston.format.timestamp({ format: 'DD-MM-YYYY HH:mm:ss' }),
-    winston.format.printf(
-        (info) => `[${info.timestamp}] ${info.level}:${info.message}`,
-    ),
+    winston.format.printf((info) => `[${info.timestamp}] ${info.level}:${info.message}`),
 )
 
 const transports = [
     new winston.transports.Console({
-        format: winston.format.combine(
-            winston.format.colorize({ all: true })
-        ),
+        format: winston.format.combine(winston.format.colorize({ all: true })),
     }),
     new winston.transports.DailyRotateFile({
         format: winston.format.combine(
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.json()
+            winston.format.json(),
         ),
         filename: 'logs/error-%DATE%.log',
         datePattern: 'DD-MM-YYYY',
         maxSize: '20m',
         maxFiles: '14d',
-        level: 'error'
+        level: 'error',
     }),
     new winston.transports.DailyRotateFile({
         format: winston.format.combine(
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-            winston.format.json()
+            winston.format.json(),
         ),
         filename: 'logs/all-%DATE%.log',
         datePattern: 'DD-MM-YYYY',
         maxSize: '20m',
-        maxFiles: '14d'
+        maxFiles: '14d',
     }),
 ]
 
