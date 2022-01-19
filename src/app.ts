@@ -24,6 +24,7 @@ class App {
         this.httpServer = createServer(this.app)
         this.io = new Server(this.httpServer, {})
 
+        this.connectToTheDatabase()
         this.initializeMiddleware()
         this.initializeControllers(controllers)
         this.initializeErrorHandling()
